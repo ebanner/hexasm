@@ -2,15 +2,15 @@
 
 
 ;;
-;; Code highlighting functions
+;; asm highlighting functions
 ;;
 
 (setq hexasm-prev-lineno 1)
 (defun get-lineno-from-hexl-address-at-point ()
   (let* ((address (hexl-current-address)))
-    (while (not (gethash address my-map))
+    (while (not (gethash address hexasm-hex-to-asm-map))
       (setq address (1- address)))
-    (gethash address my-map)))
+    (gethash address hexasm-hex-to-asm-map)))
 
 
 (defun highlight-line-in-buffer (buffer line-number &optional remove)
@@ -50,6 +50,8 @@
 ;; Parse listing file functions
 ;;
 
+(cd "~/Code/os/print_alphabet")
+
 (defun get-list-file-contents ()
   (setq list-file-contents
         (with-temp-buffer
@@ -83,7 +85,7 @@
 
 
 (defun get-address-to-lineno-map (lines)
-  (let ((my-map (make-hash-table :test 'equal)))
+  (let ((hexasm-hex-to-asm-map (make-hash-table :test 'equal)))
     (dolist (line lines)
       (when (is-code-line line)
         (let* ((tokens (split-string line))
@@ -92,14 +94,74 @@
                (address (string-to-number address-string 16))
                (bytes (nth 2 tokens))
                (command (mapconcat 'identity (nthcdr 3 tokens) " ")))
-          (puthash address lineno my-map))))
-    my-map))
+          (puthash address lineno hexasm-hex-to-asm-map))))
+    hexasm-hex-to-asm-map))
+
+
+;;
+;; asm -> hexl functions
+;;
+
+
+(defun swap-keys-values (original-map)
+  "Create a new map where keys and values are swapped."
+  (let ((new-map (make-hash-table :test 'equal)))
+    (maphash (lambda (key value)
+               (puthash value key new-map))
+             original-map)
+    new-map))
+
+
+(setq hexasm-prev-lineno 1)
+(defun get-address-from-lineno-at-point ()
+  (let* ((lineno (line-number-at-pos)))
+    (while (not (gethash lineno hexasm-asm-to-hex-map))
+      (setq lineno (1- lineno)))
+    (gethash lineno hexasm-asm-to-hex-map)))
+
+
+(defun move-point-to-address (address)
+  (progn
+    (windmove-right)
+    (hexl-goto-address address)
+    (windmove-left)))
+
+
+(defun highlight-main-asm ()
+  (when (string= (buffer-name) "os.asm")
+    (let ((address (get-address-from-lineno-at-point)))
+      (when address
+        (move-point-to-address address)))))
 
 
 (setq list-file-contents (get-list-file-contents))
 (setq lines (split-string list-file-contents "\n"))
-(setq my-map (get-address-to-lineno-map lines))
+(setq hexasm-hex-to-asm-map (get-address-to-lineno-map lines))
+(setq hexasm-asm-to-hex-map (swap-keys-values hexasm-hex-to-asm-map))
 
 
 (remove-hook 'post-command-hook 'highlight-main)
 (add-hook 'post-command-hook 'highlight-main)
+
+(remove-hook 'post-command-hook 'highlight-main-asm)
+(add-hook 'post-command-hook 'highlight-main-asm)
+
+
+(setq hexasm-previous-buffer (buffer-name))
+
+
+(defun hexasm-clear-highlighting-on-buffer-change-to-asm ()
+  (progn
+    (when (and (string= (buffer-name) "os.asm")
+               (string= hexasm-previous-buffer "os"))
+      (hexasm-un-highlight-line hexasm-prev-lineno))
+    (setq hexasm-previous-buffer (buffer-name))))
+
+
+
+;; (hexasm-un-highlight-line hexasm-prev-lineno)
+
+(remove-hook 'post-command-hook 'hexasm-clear-highlighting-on-buffer-change-to-asm)
+(add-hook 'post-command-hook 'hexasm-clear-highlighting-on-buffer-change-to-asm)
+
+(buffer-name)
