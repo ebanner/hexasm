@@ -1,9 +1,70 @@
 ;;
 ;; hexl-mode
 ;;
-(defun print-lineno-from-hexl-address-at-point (hexl-address-to-source-lineno-map)
+
+(setq prev-lineno 1)
+
+
+(defun get-lineno-from-hexl-address-at-point ()
+  (let* ((hexl-address (format "%x" (hexl-current-address))))
+    (gethash hexl-address my-map)))
+
+
+(defun highlight-main ()
+  (when (string= (buffer-name) "os")
+    (let ((source-lineno (get-lineno-from-hexl-address-at-point)))
+      (when source-lineno
+        (progn
+          (when (not (= source-lineno prev-lineno))
+            (highlight-line-in-buffer "os.asm" prev-lineno t))
+          (highlight-line-in-buffer "os.asm" source-lineno)
+          (setq prev-lineno source-lineno))))))
+
+
+(remove-hook 'post-command-hook 'get-lineno-from-hexl-address-at-point)
+(add-hook 'post-command-hook 'highlight-main)
+
+
+(setq my-var 5)
+(setq my-var 6)
+
+
+(add-hook 'post-command-hook '(lambda () (message "Hi!")))
+(remove-hook 'post-command-hook '(lambda () (message "Hi!")))
+
+
+(defun get-hexl-current-address-hex ()
   (let ((hexl-address (format "%x" (hexl-current-address))))
-    (gethash "0" hexl-address-to-source-lineno-map)))
+    (message hexl-address)))
+
+
+hexl-follow-ascii-hook
+
+
+(add-hook 'post-command-hook 'get-hexl-current-address-hex)
+(remove-hook 'post-command-hook 'get-hexl-current-address-hex)
+
+
+(defun highlight-line-in-buffer (buffer line-number &optional remove)
+  "Highlight or remove highlighting from the given line number in the specified buffer."
+  (with-current-buffer buffer
+    (save-excursion
+      (goto-char (point-min))
+      (forward-line (1- line-number))
+      (if remove
+          (let ((overlay (car-safe (overlays-at (point)))))
+            (when overlay
+              (delete-overlay overlay)))
+        (let ((overlay (make-overlay (line-beginning-position) (line-end-position))))
+          (overlay-put overlay 'face '(:background "yellow")))))))
+
+
+(highlight-line-in-buffer "os.asm" 6)
+(highlight-line-in-buffer "os.asm" 6 t)
+
+
+(add-hook 'post-command-hook 'get-lineno-from-hexl-address-at-point)
+(remove-hook 'post-command-hook 'get-lineno-from-hexl-address-at-point)
 
 
 ;;
@@ -46,9 +107,9 @@
     (dolist (line lines)
       (when (is-code-line line)
         (let* ((tokens (split-string line))
-               (lineno (nth 0 tokens))
+               (lineno (string-to-number (nth 0 tokens)))
                (address (nth 1 tokens))
-               (hex-address (format "%X" (string-to-number address 16)))
+               (hex-address (format "%x" (string-to-number address 16)))
                (bytes (nth 2 tokens))
                (command (mapconcat 'identity (nthcdr 3 tokens) " ")))
           (puthash hex-address lineno my-map))))
