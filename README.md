@@ -2,5 +2,5 @@
 
 Connect asm and hexl buffers
 
-https://github.com/ebanner/hexasm/assets/2068912/3d15b2da-9522-4f6c-a348-fa86b8fc06f2
+https://github.com/ebanner/hexasm/assets/2068912/3d321c7a-0fdc-4350-9da8-4b75d8fb61b1
 
