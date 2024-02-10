@@ -43,3 +43,7 @@ hexasm parses a listing file (output from `nasm` with `-l`) to get a map between
     27                                  
     28                                  end:
 ```
+
+## Related projects
+
+- [ebanner/pynt](https://github.com/ebanner/pynt)
