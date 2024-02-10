@@ -1,48 +1,16 @@
+;; hexasm
+
+
 ;;
-;; hexl-mode
+;; Code highlighting functions
 ;;
 
-(setq prev-lineno 1)
-
-
+(setq hexasm-prev-lineno 1)
 (defun get-lineno-from-hexl-address-at-point ()
-  (let* ((hexl-address (format "%x" (hexl-current-address))))
-    (gethash hexl-address my-map)))
-
-
-(defun highlight-main ()
-  (when (string= (buffer-name) "os")
-    (let ((source-lineno (get-lineno-from-hexl-address-at-point)))
-      (when source-lineno
-        (progn
-          (when (not (= source-lineno prev-lineno))
-            (highlight-line-in-buffer "os.asm" prev-lineno t))
-          (highlight-line-in-buffer "os.asm" source-lineno)
-          (setq prev-lineno source-lineno))))))
-
-
-(remove-hook 'post-command-hook 'get-lineno-from-hexl-address-at-point)
-(add-hook 'post-command-hook 'highlight-main)
-
-
-(setq my-var 5)
-(setq my-var 6)
-
-
-(add-hook 'post-command-hook '(lambda () (message "Hi!")))
-(remove-hook 'post-command-hook '(lambda () (message "Hi!")))
-
-
-(defun get-hexl-current-address-hex ()
-  (let ((hexl-address (format "%x" (hexl-current-address))))
-    (message hexl-address)))
-
-
-hexl-follow-ascii-hook
-
-
-(add-hook 'post-command-hook 'get-hexl-current-address-hex)
-(remove-hook 'post-command-hook 'get-hexl-current-address-hex)
+  (let* ((address (hexl-current-address)))
+    (while (not (gethash address my-map))
+      (setq address (1- address)))
+    (gethash address my-map)))
 
 
 (defun highlight-line-in-buffer (buffer line-number &optional remove)
@@ -59,17 +27,29 @@ hexl-follow-ascii-hook
           (overlay-put overlay 'face '(:background "yellow")))))))
 
 
-(highlight-line-in-buffer "os.asm" 6)
-(highlight-line-in-buffer "os.asm" 6 t)
+(defun hexasm-un-highlight-line (lineno)
+  (highlight-line-in-buffer "os.asm" lineno t))
 
 
-(add-hook 'post-command-hook 'get-lineno-from-hexl-address-at-point)
-(remove-hook 'post-command-hook 'get-lineno-from-hexl-address-at-point)
+(defun hexasm-highlight-line (lineno)
+  (highlight-line-in-buffer "os.asm" lineno))
+
+
+(defun highlight-main ()
+  (when (string= (buffer-name) "os")
+    (let ((source-lineno (get-lineno-from-hexl-address-at-point)))
+      (when source-lineno
+        (when (not (= source-lineno hexasm-prev-lineno))
+          (progn
+            (hexasm-un-highlight-line hexasm-prev-lineno)
+            (hexasm-highlight-line source-lineno)
+            (setq hexasm-prev-lineno source-lineno)))))))
 
 
 ;;
-;; hexl -> source code map
+;; Parse listing file functions
 ;;
+
 (defun get-list-file-contents ()
   (setq list-file-contents
         (with-temp-buffer
@@ -108,11 +88,11 @@ hexl-follow-ascii-hook
       (when (is-code-line line)
         (let* ((tokens (split-string line))
                (lineno (string-to-number (nth 0 tokens)))
-               (address (nth 1 tokens))
-               (hex-address (format "%x" (string-to-number address 16)))
+               (address-string (nth 1 tokens))
+               (address (string-to-number address-string 16))
                (bytes (nth 2 tokens))
                (command (mapconcat 'identity (nthcdr 3 tokens) " ")))
-          (puthash hex-address lineno my-map))))
+          (puthash address lineno my-map))))
     my-map))
 
 
@@ -120,3 +100,6 @@ hexl-follow-ascii-hook
 (setq lines (split-string list-file-contents "\n"))
 (setq my-map (get-address-to-lineno-map lines))
 
+
+(remove-hook 'post-command-hook 'highlight-main)
+(add-hook 'post-command-hook 'highlight-main)
