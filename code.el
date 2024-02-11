@@ -13,37 +13,38 @@
     (gethash address hexasm-hex-to-asm-map)))
 
 
-(defun highlight-line-in-buffer (buffer line-number &optional remove)
+(defun hexasm-un-highlight-line (line-number)
   "Highlight or remove highlighting from the given line number in the specified buffer."
-  (with-current-buffer buffer
+  (with-current-buffer "os.asm"
     (save-excursion
       (goto-char (point-min))
       (forward-line (1- line-number))
-      (if remove
-          (let ((overlay (car-safe (overlays-at (point)))))
-            (when overlay
-              (delete-overlay overlay)))
-        (let ((overlay (make-overlay (line-beginning-position) (line-end-position))))
-          (overlay-put overlay 'face '(:background "yellow")))))))
+      (let ((existing-overlay (car-safe (overlays-at (point)))))
+        (when existing-overlay
+          (delete-overlay existing-overlay))))))
 
 
-(defun hexasm-un-highlight-line (lineno)
-  (highlight-line-in-buffer "os.asm" lineno t))
-
-
-(defun hexasm-highlight-line (lineno)
-  (highlight-line-in-buffer "os.asm" lineno))
+(defun hexasm-highlight-line (line-number)
+  (with-current-buffer "os.asm"
+    (save-excursion
+      (goto-char (point-min))
+      (forward-line (1- line-number))
+      (let ((existing-overlay (car-safe (overlays-at (point)))))
+        (when (not existing-overlay)
+          (let ((new-overlay (make-overlay (line-beginning-position) (line-end-position))))
+            (overlay-put new-overlay 'face '(:background "yellow"))))))))
 
 
 (defun highlight-main ()
   (when (string= (buffer-name) "os")
     (let ((source-lineno (get-lineno-from-hexl-address-at-point)))
       (when source-lineno
-        (when (not (= source-lineno hexasm-prev-lineno))
-          (progn
-            (hexasm-un-highlight-line hexasm-prev-lineno)
-            (hexasm-highlight-line source-lineno)
-            (setq hexasm-prev-lineno source-lineno)))))))
+        (progn
+          (when (not (= source-lineno hexasm-prev-lineno))
+            (progn
+              (hexasm-un-highlight-line hexasm-prev-lineno)
+              (setq hexasm-prev-lineno source-lineno)))
+          (hexasm-highlight-line source-lineno))))))
 
 
 ;;
