@@ -144,6 +144,15 @@
     (setq hexasm-previous-buffer (buffer-name))))
 
 
+(setq hexasm-previous-buffer-2 (buffer-name))
+(defun hexasm-highlight-on-buffer-change-to-hexl ()
+  (progn
+    (when (and (string= (buffer-name) "os")
+               (string= hexasm-previous-buffer-2 "os.asm"))
+      (hexasm-highlight-line hexasm-prev-lineno))
+    (setq hexasm-previous-buffer-2 (buffer-name))))
+
+
 (setq list-file-contents (get-list-file-contents))
 (setq lines (split-string list-file-contents "\n"))
 (setq hexasm-hex-to-asm-map (get-address-to-lineno-map lines))
@@ -158,4 +167,7 @@
 
 (remove-hook 'post-command-hook 'hexasm-clear-highlighting-on-buffer-change-to-asm)
 (add-hook 'post-command-hook 'hexasm-clear-highlighting-on-buffer-change-to-asm)
+
+(remove-hook 'post-command-hook 'hexasm-highlight-on-buffer-change-to-hexl)
+(add-hook 'post-command-hook 'hexasm-highlight-on-buffer-change-to-hexl t) ; high priority
 
