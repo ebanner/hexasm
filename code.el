@@ -50,7 +50,7 @@
 ;; Parse listing file functions
 ;;
 
-(cd "~/Code/os/print_alphabet")
+(cd "~/Code/os/print_hello")
 
 (defun get-list-file-contents ()
   (setq list-file-contents
@@ -76,12 +76,11 @@
 
 (defun is-code-line (line)
   (let ((tokens (split-string line)))
-    (and (> (length tokens) 2)
+    (and (> (length tokens) 3)
          (let ((lineno (nth 0 tokens))
                (possible-address (nth 1 tokens))
                (possible-bytes (nth 2 tokens)))
-           (and (is-hex-number possible-address)
-                (is-hex-number possible-bytes))))))
+           (is-hex-number possible-address)))))
 
 
 (defun get-address-to-lineno-map (lines)
@@ -115,7 +114,8 @@
 (setq hexasm-prev-lineno 1)
 (defun get-address-from-lineno-at-point ()
   (let* ((lineno (line-number-at-pos)))
-    (while (not (gethash lineno hexasm-asm-to-hex-map))
+    (while (and (>= lineno 0)
+                (not (gethash lineno hexasm-asm-to-hex-map)))
       (setq lineno (1- lineno)))
     (gethash lineno hexasm-asm-to-hex-map)))
 
@@ -134,6 +134,15 @@
         (move-point-to-address address)))))
 
 
+(setq hexasm-previous-buffer (buffer-name))
+(defun hexasm-clear-highlighting-on-buffer-change-to-asm ()
+  (progn
+    (when (and (string= (buffer-name) "os.asm")
+               (string= hexasm-previous-buffer "os"))
+      (hexasm-un-highlight-line hexasm-prev-lineno))
+    (setq hexasm-previous-buffer (buffer-name))))
+
+
 (setq list-file-contents (get-list-file-contents))
 (setq lines (split-string list-file-contents "\n"))
 (setq hexasm-hex-to-asm-map (get-address-to-lineno-map lines))
@@ -146,22 +155,6 @@
 (remove-hook 'post-command-hook 'highlight-main-asm)
 (add-hook 'post-command-hook 'highlight-main-asm)
 
-
-(setq hexasm-previous-buffer (buffer-name))
-
-
-(defun hexasm-clear-highlighting-on-buffer-change-to-asm ()
-  (progn
-    (when (and (string= (buffer-name) "os.asm")
-               (string= hexasm-previous-buffer "os"))
-      (hexasm-un-highlight-line hexasm-prev-lineno))
-    (setq hexasm-previous-buffer (buffer-name))))
-
-
-
-;; (hexasm-un-highlight-line hexasm-prev-lineno)
-
 (remove-hook 'post-command-hook 'hexasm-clear-highlighting-on-buffer-change-to-asm)
 (add-hook 'post-command-hook 'hexasm-clear-highlighting-on-buffer-change-to-asm)
 
-(buffer-name)
