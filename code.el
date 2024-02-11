@@ -44,7 +44,10 @@
             (progn
               (hexasm-un-highlight-line hexasm-prev-lineno)
               (setq hexasm-prev-lineno source-lineno)))
-          (hexasm-highlight-line source-lineno))))))
+          (hexasm-highlight-line source-lineno)
+          (windmove-left)
+          (goto-line source-lineno)
+          (windmove-right))))))
 
 
 ;;
