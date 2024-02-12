@@ -87,7 +87,7 @@
            (is-hex-number possible-address)))))
 
 
-(defun get-address-to-lineno-map (lines)
+(defun get-hex-to-asm-map (lines)
   (let ((hexasm-hex-to-asm-map (make-hash-table :test 'equal)))
     (dolist (line lines)
       (when (is-code-line line)
@@ -156,21 +156,27 @@
     (setq hexasm-previous-buffer-2 (buffer-name))))
 
 
-(setq list-file-contents (get-list-file-contents))
-(setq lines (split-string list-file-contents "\n"))
-(setq hexasm-hex-to-asm-map (get-address-to-lineno-map lines))
-(setq hexasm-asm-to-hex-map (swap-keys-values hexasm-hex-to-asm-map))
+
+(defun get-listing-file-lines ()
+  (let ((list-file-contents (get-list-file-contents)))
+    (split-string list-file-contents "\n")))
 
 
-(remove-hook 'post-command-hook 'highlight-main)
-(add-hook 'post-command-hook 'highlight-main)
+(defun hexasm-init ()
+  (setq lines (get-listing-file-lines))
+  (setq hexasm-hex-to-asm-map (get-hex-to-asm-map lines))
+  (setq hexasm-asm-to-hex-map (swap-keys-values hexasm-hex-to-asm-map))
 
-(remove-hook 'post-command-hook 'highlight-main-asm)
-(add-hook 'post-command-hook 'highlight-main-asm)
+  (remove-hook 'post-command-hook 'highlight-main)
+  (add-hook 'post-command-hook 'highlight-main)
 
-(remove-hook 'post-command-hook 'hexasm-clear-highlighting-on-buffer-change-to-asm)
-(add-hook 'post-command-hook 'hexasm-clear-highlighting-on-buffer-change-to-asm)
+  (remove-hook 'post-command-hook 'highlight-main-asm)
+  (add-hook 'post-command-hook 'highlight-main-asm)
 
-(remove-hook 'post-command-hook 'hexasm-highlight-on-buffer-change-to-hexl)
-(add-hook 'post-command-hook 'hexasm-highlight-on-buffer-change-to-hexl t) ; high priority
+  (remove-hook 'post-command-hook 'hexasm-clear-highlighting-on-buffer-change-to-asm)
+  (add-hook 'post-command-hook 'hexasm-clear-highlighting-on-buffer-change-to-asm)
+
+  (remove-hook 'post-command-hook 'hexasm-highlight-on-buffer-change-to-hexl)
+  (add-hook 'post-command-hook 'hexasm-highlight-on-buffer-change-to-hexl t) ; high priority
+  )
 
