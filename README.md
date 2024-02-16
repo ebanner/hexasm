@@ -48,7 +48,7 @@ hexasm parses a listing file (output from `nasm` with `-l`) to get a map between
 
 I am also experimenting with ways to make my process of OS development more interactive
 
-![image](https://github.com/ebanner/hexasm/assets/2068912/e595d24f-08ce-47ad-9252-f67fa98247b5)
+![image](https://github.com/ebanner/hexasm/assets/2068912/63626b07-c757-4ac6-b5a9-da4851df5f27)
 
 ## Related projects
 
