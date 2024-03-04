@@ -162,6 +162,12 @@
     (split-string list-file-contents "\n")))
 
 
+(defun hexasm-insert-image ()
+  (let ((cmd (sexp-at-point)))
+    (backward-sexp)
+    (eval cmd)))
+
+
 (defun hexasm-init ()
   (setq lines (get-listing-file-lines))
   (setq hexasm-hex-to-asm-map (get-hex-to-asm-map lines))
