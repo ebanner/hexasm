@@ -4,10 +4,6 @@ Connect asm and hexl buffers
 
 https://github.com/ebanner/hexasm/assets/2068912/3d321c7a-0fdc-4350-9da8-4b75d8fb61b1
 
-## Discussion
-
-- [Hacker News discussion](https://news.ycombinator.com/item?id=39330281)
-
 ## Features
 
 - hexl address → line number mapping
@@ -57,3 +53,7 @@ I am also experimenting with ways to make my process of OS development more inte
 ## Related projects
 
 - [ebanner/pynt](https://github.com/ebanner/pynt)
+
+## Discussion
+
+[Hacker News discussion](https://news.ycombinator.com/item?id=39330281)
